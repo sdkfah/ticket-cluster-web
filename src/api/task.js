@@ -1,18 +1,26 @@
-import request from '@/utils/request';
+import request from '@/utils/request'
 
-// 获取抢票任务列表
-export function getTaskList(params) {
+// 1. 获取所有任务列表
+export function getTaskList() {
   return request({
-    url: '/tasks',
-    method: 'get',
-    params
-  });
+    url: '/api/v1/tasks/list', // 对应 GET 接口
+    method: 'get'
+  })
 }
 
-// 启动抢票任务
-export function startTask(id) {
+
+// 2. 创建任务
+export function createOrderTask(data) {
   return request({
-    url: `/tasks/${id}/start`,
-    method: 'post'
-  });
+    url: '/api/v1/tasks/create', // 对应 POST create 接口
+    method: 'post',
+    data
+  })
+}
+
+export function deleteTask(id) {
+  return request({
+    url: `/api/v1/tasks/${id}`,
+    method: 'delete'
+  })
 }
