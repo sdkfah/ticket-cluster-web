@@ -45,59 +45,47 @@
           border
           highlight-current-row
           @current-change="handleRowClick"
-          :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+          style="width: 100%"
         >
-          <el-table-column prop="label" label="票档" min-width="150" />
-          <el-table-column label="开售时间" width="120" align="center">
+          <el-table-column label="票档" min-width="250">
             <template #default="{ row }">
-              <span v-if="row.sku_id" style="font-size: 12px; color: #606266">
-                {{ row.formattedSaleTime || "-" }}
+              <span
+                :class="['ticket-label', row.sku_id ? 'is-sku' : 'is-date']"
+              >
+                {{ row.label }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column prop="price" label="价格" width="100">
+
+          <el-table-column label="开售时间" width="160" align="center">
+            <template #default="{ row }">
+              <span v-if="row.sku_id" class="sub-text">
+                {{
+                  row.sale_start_time
+                    ? row.sale_start_time.replace("T", " ").substring(0, 16)
+                    : "-"
+                }}
+              </span>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="price" label="价格" width="100" align="center">
             <template #default="{ row }">
               <span v-if="row.price" style="color: #f56c6c; font-weight: bold"
                 >¥{{ row.price }}</span
               >
             </template>
           </el-table-column>
-          <el-table-column prop="stock" label="状态" width="80" align="center">
+
+          <el-table-column label="状态" width="100" align="center">
             <template #default="{ row }">
               <template v-if="row.sku_id">
                 <el-tag
-                  :type="
-                    row.displayStatus === 1
-                      ? 'success'
-                      : row.displayStatus === 2
-                        ? 'warning'
-                        : 'danger'
-                  "
-                  size="small"
-                >
-                  {{
-                    row.displayStatus === 1
-                      ? "有票"
-                      : row.displayStatus === 2
-                        ? "预售"
-                        : "无票"
-                  }}
-                </el-tag>
-              </template>
-
-              <template v-else>
-                <el-tag
-                  :type="
-                    row.hasStock
-                      ? 'success'
-                      : row.isPresale
-                        ? 'warning'
-                        : 'danger'
-                  "
+                  :type="row.stock_status === '有票' ? 'success' : 'danger'"
                   size="small"
                   effect="plain"
                 >
-                  {{ row.hasStock ? "有票" : row.isPresale ? "预售" : "无票" }}
+                  {{ row.stock_status || "无票" }}
                 </el-tag>
               </template>
             </template>
@@ -203,6 +191,22 @@ const taskForm = reactive({
   item_id: "",
 });
 
+const formatSaleTime = (timeStr) => {
+  if (!timeStr || timeStr === "-") return "-";
+  try {
+    const date = new Date(timeStr);
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    const hh = String(date.getHours()).padStart(2, "0");
+    const mm = String(date.getMinutes()).padStart(2, "0");
+
+    return `${y}-${m}-${d} ${hh}:${mm}`;
+  } catch (e) {
+    return timeStr;
+  }
+};
+
 const handleSearchTicket = async (query) => {
   searchLoading.value = true;
   try {
@@ -237,20 +241,6 @@ const onProjectSelect = async (val) => {
 
     const dateMap = {};
     rawItems.forEach((item) => {
-      let formattedTime = "-";
-      if (item.sale_start_time) {
-        const st = new Date(item.sale_start_time);
-        formattedTime = st
-          .toLocaleString("zh-CN", {
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          })
-          .replace(/\//g, "-");
-      }
-
       // 格式化日期展示
       const d = new Date(item.perform_time);
       const dateStr = d
@@ -279,7 +269,6 @@ const onProjectSelect = async (val) => {
           children: [],
           hasStock: false,
           isPresale: false,
-          formattedSaleTime: formattedTime,
         };
       }
 
@@ -291,7 +280,7 @@ const onProjectSelect = async (val) => {
         ...item,
         id: item.sku_id,
         displayStatus: currentStatus, // ✨ 存储计算后的显示状态
-        label: `${item.price_name}`,
+        label: item.price_name,
       });
     });
 
