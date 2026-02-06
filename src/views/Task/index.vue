@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-container">
+  <div class="task-container">
     <div class="header-actions">
       <el-button type="primary" @click="handleCreate">新建任务</el-button>
       <el-button 
@@ -23,7 +23,7 @@
       <el-table-column type="selection" width="55" align="center" />
       
       <el-table-column prop="id" label="ID" width="60" />
-      <el-table-column label="艺人/演出" min-width="120">
+      <el-table-column label="演出" min-width="30">
         <template #default="{ row }">
           <b style="color: #409EFF">{{ row.artist }}</b>
         </template>

@@ -10,7 +10,7 @@ export function getTaskList() {
 
 
 // 2. 创建任务
-export function createOrderTask(data) {
+export function createTask(data) {
   return request({
     url: '/api/v1/tasks/create', // 对应 POST create 接口
     method: 'post',

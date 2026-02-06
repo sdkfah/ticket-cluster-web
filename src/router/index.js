@@ -4,18 +4,18 @@ import { createRouter, createWebHistory } from "vue-router";
 const routes = [
   {
     path: "/",
-    redirect: "/dashboard", // 默认跳转到看板
+    redirect: "/task", // 默认跳转到看板
   },
   {
-    path: "/dashboard",
-    name: "Dashboard",
-    component: () => import("@/views/Dashboard/index.vue"),
+    path: "/task",
+    name: "Task",
+    component: () => import("@/views/Task/index.vue"),
     meta: { title: "任务看板" },
   },
   {
     path: "/ticket-items",
     name: "TicketItems",
-    component: () => import("@/views/TicketBoard/index.vue"), // 对应刚才写的新页面
+    component: () => import("@/views/Ticket/index.vue"), // 对应刚才写的新页面
     meta: { title: "票档监控", icon: "Ticket" },
   },
   {
