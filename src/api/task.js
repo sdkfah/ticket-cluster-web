@@ -24,3 +24,12 @@ export function deleteTask(id) {
     method: 'delete'
   })
 }
+
+// 批量删除任务
+export function batchDeleteTasks(ids) {
+  return request({
+    url: '/api/v1/tasks/batch-delete',
+    method: 'post',
+    data: { ids } // 传 ID 数组
+  })
+}

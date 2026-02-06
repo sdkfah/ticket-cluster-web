@@ -2,10 +2,26 @@
   <div class="dashboard-container">
     <div class="header-actions">
       <el-button type="primary" @click="handleCreate">新建任务</el-button>
+      <el-button 
+        type="danger" 
+        :disabled="selectedIds.length === 0" 
+        @click="handleBatchDelete"
+      >
+        批量删除 ({{ selectedIds.length }})
+      </el-button>
       <el-button @click="loadData">刷新数据</el-button>
     </div>
 
-    <el-table :data="taskList" border stripe style="width: 100%; margin-top: 20px" v-loading="loading">
+    <el-table 
+      :data="taskList" 
+      border 
+      stripe 
+      style="width: 100%; margin-top: 20px" 
+      v-loading="loading"
+      @selection-change="handleSelectionChange"
+    >
+      <el-table-column type="selection" width="55" align="center" />
+      
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column label="艺人/演出" min-width="120">
         <template #default="{ row }">
@@ -39,7 +55,7 @@
             @confirm="handleDelete(row)"
           >
             <template #reference>
-              <el-button size="small" type="danger" link>删除</el-button>
+              <el-button size="small" type="danger">删除</el-button>
             </template>
           </el-popconfirm>
         </template>
@@ -66,13 +82,14 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { getTaskList, deleteTask } from '@/api/task'
-import { ElMessage } from 'element-plus'
+import { getTaskList, deleteTask, batchDeleteTasks } from '@/api/task' // 确保 api 中有 batchDeleteTasks
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
 const dialogVisible = ref(false)
 const taskList = ref([])
 const total = ref(0)
+const selectedIds = ref([]) // 用于存放勾选的 ID 列表
 
 const queryParams = reactive({
   page: 1,
@@ -85,26 +102,48 @@ const statusMap = {
   2: { label: '已撤单', type: 'warning' }
 }
 
+// 监听表格勾选状态变化
+const handleSelectionChange = (selection) => {
+  selectedIds.value = selection.map(item => item.id)
+}
+
 const loadData = async () => {
   loading.value = true
   try {
     const res = await getTaskList(queryParams)
     taskList.value = res.data
-    total.value = res.total || res.data.length 
+    total.value = res.total || res.data.length
   } finally {
     loading.value = false
   }
 }
 
-// 处理删除
+// 处理单条删除
 const handleDelete = async (row) => {
   try {
     await deleteTask(row.id)
     ElMessage.success('任务已成功删除')
-    loadData() // 重新刷新列表
-  } catch (err) {
-    // 错误信息由拦截器弹出
-  }
+    loadData()
+  } catch (err) {}
+}
+
+// 新增：批量删除逻辑
+const handleBatchDelete = () => {
+  ElMessageBox.confirm(
+    `确定要批量删除这 ${selectedIds.value.length} 条任务吗？`,
+    '警告',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }
+  ).then(async () => {
+    try {
+      await batchDeleteTasks(selectedIds.value)
+      ElMessage.success('批量删除成功')
+      loadData()
+    } catch (err) {}
+  }).catch(() => {})
 }
 
 const handleCreate = () => {
