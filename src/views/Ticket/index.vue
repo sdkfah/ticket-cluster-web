@@ -48,6 +48,13 @@
           :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         >
           <el-table-column prop="label" label="日期 / 票档" min-width="150" />
+          <el-table-column label="开售时间" width="120" align="center">
+            <template #default="{ row }">
+              <span v-if="row.sku_id" style="font-size: 12px; color: #606266">
+                {{ row.formattedSaleTime || "-" }}
+              </span>
+            </template>
+          </el-table-column>
           <el-table-column prop="price" label="价格" width="100">
             <template #default="{ row }">
               <span v-if="row.price" style="color: #f56c6c; font-weight: bold"
@@ -127,7 +134,7 @@
 
           <el-divider content-position="left">客户信息</el-divider>
 
-          <el-form-item label="实名人">
+          <el-form-item label="实名人" required>
             <el-input
               v-model="taskForm.customer_info"
               placeholder="姓名+身份证号"
@@ -230,6 +237,20 @@ const onProjectSelect = async (val) => {
 
     const dateMap = {};
     rawItems.forEach((item) => {
+      let formattedTime = "-";
+      if (item.sale_start_time) {
+        const st = new Date(item.sale_start_time);
+        formattedTime = st
+          .toLocaleString("zh-CN", {
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })
+          .replace(/\//g, "-");
+      }
+
       // 格式化日期展示
       const d = new Date(item.perform_time);
       const dateStr = d
@@ -257,7 +278,8 @@ const onProjectSelect = async (val) => {
           label: displayLabel,
           children: [],
           hasStock: false,
-          isPresale: false, // ✨ 用于统计该日期是否有预售
+          isPresale: false,
+          formattedSaleTime: formattedTime,
         };
       }
 
@@ -361,6 +383,15 @@ const resetForm = () => {
 </script>
 
 <style scoped>
+
+:deep(.el-table__row--level-1 .cell) {
+  font-size: 12px !important; 
+}
+
+/* 父节点（日期行）保持清晰 */
+:deep(.el-table__row--level-0 .cell) {
+  font-size: 13px;
+}
 .split-container {
   display: flex;
   gap: 20px;
