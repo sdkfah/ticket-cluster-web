@@ -47,7 +47,7 @@
           @current-change="handleRowClick"
           :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         >
-          <el-table-column prop="label" label="日期 / 票档" min-width="150" />
+          <el-table-column prop="label" label="票档" min-width="150" />
           <el-table-column label="开售时间" width="120" align="center">
             <template #default="{ row }">
               <span v-if="row.sku_id" style="font-size: 12px; color: #606266">
@@ -199,8 +199,8 @@ const taskForm = reactive({
   customer_info: "",
   contact_phone: "",
   bounty: 0,
-  skuId: "",
-  itemId: "",
+  sku_id: "",
+  item_id: "",
 });
 
 const handleSearchTicket = async (query) => {
@@ -291,7 +291,7 @@ const onProjectSelect = async (val) => {
         ...item,
         id: item.sku_id,
         displayStatus: currentStatus, // ✨ 存储计算后的显示状态
-        label: `${item.price_name} - ¥${item.price}`,
+        label: `${item.price_name}`,
       });
     });
 
@@ -317,9 +317,8 @@ const handleRowClick = (row) => {
   selectedPrice.value = row;
   taskForm.artist = row.project_title;
   taskForm.city = row.venue_name;
-
-  taskForm.skuId = row.sku_id;
-  taskForm.itemId = row.item_id;
+  taskForm.sku_id = row.sku_id;
+  taskForm.item_id = row.item_id;
 
   if (row.perform_time) {
     const d = new Date(row.perform_time);
@@ -335,9 +334,8 @@ const handleRowClick = (row) => {
     ];
     const timeStr = d.toTimeString().substring(0, 5);
     taskForm.target_date = `${dateStr} ${weekDay} ${timeStr}`;
+    taskForm.target_price = row.price_name;
   }
-
-  taskForm.target_price = row.price;
 };
 
 const submitTask = async () => {
@@ -383,9 +381,8 @@ const resetForm = () => {
 </script>
 
 <style scoped>
-
 :deep(.el-table__row--level-1 .cell) {
-  font-size: 12px !important; 
+  font-size: 12px !important;
 }
 
 /* 父节点（日期行）保持清晰 */
