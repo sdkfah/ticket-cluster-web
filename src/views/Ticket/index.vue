@@ -3,41 +3,51 @@
     <div class="left-panel">
       <el-card shadow="never" class="full-height-card">
         <template #header>
-          <el-select
-            v-model="searchKeyword"
-            filterable
-            remote
-            reserve-keyword
-            placeholder="输入演出关键字搜索"
-            :remote-method="handleSearchTicket"
-            @focus="handleSearchTicket('')"
-            :loading="searchLoading"
-            style="width: 100%"
-            @change="onProjectSelect"
-          >
-            <el-option
-              v-for="item in projectOptions"
-              :key="item.item_id"
-              :label="item.project_title"
-              :value="item.item_id"
-            />
-          </el-select>
+          <div style="display: flex; align-items: center; gap: 12px">
+            <el-select
+              v-model="searchKeyword"
+              filterable
+              remote
+              reserve-keyword
+              placeholder="输入演出关键字搜索"
+              :remote-method="handleSearchTicket"
+              @focus="handleSearchTicket('')"
+              :loading="searchLoading"
+              style="width: 220px"
+              @change="onProjectSelect"
+            >
+              <el-option
+                v-for="item in projectOptions"
+                :key="item.item_id"
+                :label="item.project_title"
+                :value="item.item_id"
+              />
+            </el-select>
+
+            <el-button
+              type="primary"
+              link
+              @click="toggleAllExpansion"
+              :disabled="displayTree.length === 0"
+            >
+              {{ isAllExpanded ? "全部收起" : "全部展开" }}
+              <el-icon class="el-icon--right">
+                <component :is="isAllExpanded ? 'ArrowUp' : 'ArrowDown'" />
+              </el-icon>
+            </el-button>
+          </div>
         </template>
 
         <el-table
+          ref="ticketTable"
           :data="displayTree"
           row-key="id"
-          ref="ticketTable"
           border
           highlight-current-row
           @current-change="handleRowClick"
           :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         >
-          <el-table-column
-            prop="label"
-            label="日期 / 票档描述"
-            min-width="150"
-          />
+          <el-table-column prop="label" label="日期 / 票档" min-width="150" />
           <el-table-column prop="price" label="价格" width="100">
             <template #default="{ row }">
               <span v-if="row.price" style="color: #f56c6c; font-weight: bold"
@@ -49,20 +59,38 @@
             <template #default="{ row }">
               <template v-if="row.sku_id">
                 <el-tag
-                  :type="row.stock_status === 1 ? 'success' : 'danger'"
+                  :type="
+                    row.displayStatus === 1
+                      ? 'success'
+                      : row.displayStatus === 2
+                        ? 'warning'
+                        : 'danger'
+                  "
                   size="small"
                 >
-                  {{ row.stock_status === 1 ? "有票" : "无票" }}
+                  {{
+                    row.displayStatus === 1
+                      ? "有票"
+                      : row.displayStatus === 2
+                        ? "预售"
+                        : "无票"
+                  }}
                 </el-tag>
               </template>
 
               <template v-else>
                 <el-tag
-                  :type="row.hasStock ? 'success' : 'danger'"
+                  :type="
+                    row.hasStock
+                      ? 'success'
+                      : row.isPresale
+                        ? 'warning'
+                        : 'danger'
+                  "
                   size="small"
                   effect="plain"
                 >
-                  {{ row.hasStock ? "有票" : "无票" }}
+                  {{ row.hasStock ? "有票" : row.isPresale ? "预售" : "无票" }}
                 </el-tag>
               </template>
             </template>
@@ -121,7 +149,6 @@
           <el-form-item>
             <el-button
               type="primary"
-              block
               @click="submitTask"
               :loading="submitLoading"
               >保存任务</el-button
@@ -140,10 +167,13 @@
 </template>
 
 <script setup>
-import { ref, reactive } from "vue";
+// ✨ 增加 nextTick 导入
+import { ref, reactive, nextTick } from "vue";
 import { searchProjects, getTicketSkus } from "@/api/ticket";
 import { createTask } from "@/api/task";
 import { ElMessage } from "element-plus";
+// ✨ 增加图标导入
+import { ArrowUp, ArrowDown } from "@element-plus/icons-vue";
 
 const searchKeyword = ref("");
 const searchLoading = ref(false);
@@ -151,6 +181,8 @@ const submitLoading = ref(false);
 const projectOptions = ref([]);
 const displayTree = ref([]);
 const selectedPrice = ref({});
+const ticketTable = ref(null);
+const isAllExpanded = ref(true); // ✨ 控制展开收起状态
 
 const taskForm = reactive({
   artist: "",
@@ -160,13 +192,14 @@ const taskForm = reactive({
   customer_info: "",
   contact_phone: "",
   bounty: 0,
+  skuId: "",
+  itemId: "",
 });
 
 const handleSearchTicket = async (query) => {
-  // 无论 query 是否为空都允许进入，以便展示默认数据
   searchLoading.value = true;
   try {
-    const res = await searchProjects({ keyword: query || "" }); // 传空字符串给后端
+    const res = await searchProjects({ keyword: query || "" });
     projectOptions.value = res.data;
   } catch (error) {
     console.error("搜索失败", error);
@@ -175,12 +208,21 @@ const handleSearchTicket = async (query) => {
   }
 };
 
-// 2. 选择演出后构造树形结构数据
+// ✨ 核心功能：切换所有日期行的展开状态
+const toggleAllExpansion = () => {
+  isAllExpanded.value = !isAllExpanded.value;
+  displayTree.value.forEach((row) => {
+    // 调用 el-table 实例方法
+    ticketTable.value?.toggleRowExpansion(row, isAllExpanded.value);
+  });
+};
+
 const onProjectSelect = async (val) => {
   const project = projectOptions.value.find((p) => p.item_id === val);
   if (!project) return;
 
   displayTree.value = [];
+  const now = new Date(); // ✨ 获取当前时间用于对比
 
   try {
     const res = await getTicketSkus({ item_id: val });
@@ -203,34 +245,48 @@ const onProjectSelect = async (val) => {
       const timeStr = d.toTimeString().substring(0, 5);
       const displayLabel = `${dateStr} ${weekDay} ${timeStr}`;
 
+      // ✨ 判断当前 SKU 状态：1-有票，0-无票，2-预售
+      let currentStatus = item.stock_status;
+      if (item.sale_start_time && new Date(item.sale_start_time) > now) {
+        currentStatus = 2; // 如果开售时间在未来，标记为预售
+      }
+
       if (!dateMap[displayLabel]) {
         dateMap[displayLabel] = {
           id: `p-${item.perform_id}`,
           label: displayLabel,
           children: [],
-          hasStock: false, // ✨ 新增：用于标记该日期下是否有票
+          hasStock: false,
+          isPresale: false, // ✨ 用于统计该日期是否有预售
         };
       }
 
-      // 如果当前 SKU 有票，标记该日期组为有票
-      if (item.stock_status === 1) {
-        dateMap[displayLabel].hasStock = true;
-      }
+      // 更新父节点汇总状态
+      if (currentStatus === 1) dateMap[displayLabel].hasStock = true;
+      if (currentStatus === 2) dateMap[displayLabel].isPresale = true;
 
       dateMap[displayLabel].children.push({
         ...item,
         id: item.sku_id,
+        displayStatus: currentStatus, // ✨ 存储计算后的显示状态
         label: `${item.price_name} - ¥${item.price}`,
       });
     });
+
     displayTree.value = Object.values(dateMap);
+
+    // 默认展开逻辑
+    isAllExpanded.value = true;
+    await nextTick();
+    displayTree.value.forEach((row) => {
+      ticketTable.value?.toggleRowExpansion(row, true);
+    });
   } catch (error) {
     ElMessage.error("获取票档详情失败");
   }
 };
 
 const handleRowClick = (row) => {
-  // ✨ 修复点 1：增加对 row 自身的空值判断
   if (!row || !row.sku_id) {
     selectedPrice.value = {};
     return;
@@ -240,32 +296,50 @@ const handleRowClick = (row) => {
   taskForm.artist = row.project_title;
   taskForm.city = row.venue_name;
 
-  // 建议：使用更健壮的日期处理，防止 perform_time 为空
+  taskForm.skuId = row.sku_id;
+  taskForm.itemId = row.item_id;
+
   if (row.perform_time) {
     const d = new Date(row.perform_time);
-    taskForm.target_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${d.toTimeString().substring(0, 5)}`;
+    const dateStr = d
+      .toLocaleDateString("zh-CN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+      .replace(/\//g, "-");
+    const weekDay = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][
+      d.getDay()
+    ];
+    const timeStr = d.toTimeString().substring(0, 5);
+    taskForm.target_date = `${dateStr} ${weekDay} ${timeStr}`;
   }
 
   taskForm.target_price = row.price;
 };
 
 const submitTask = async () => {
+  if (!taskForm.customer_info || !taskForm.customer_info.trim()) {
+    ElMessage.warning("请填写实名人信息（姓名+身份证号）");
+    return;
+  }
+  // 校验通过后，再开始加载状态
   submitLoading.value = true;
   try {
+    // 此时 taskForm 已经包含了你之前需要的 skuId 和 itemId
     await createTask(taskForm);
     ElMessage.success("抢票任务录入成功");
     resetForm();
+  } catch (error) {
+    // 建议增加错误捕获，防止接口报错导致 loading 一直转
+    console.error("保存失败:", error);
   } finally {
     submitLoading.value = false;
   }
 };
 
-const ticketTable = ref(null);
 const resetForm = () => {
-  // 1. 清空选中的票档对象，这会触发右侧表单的 :disabled 状态
   selectedPrice.value = {};
-
-  // 2. 彻底重置表单所有字段，包括隐藏的城市、日期和价格
   Object.assign(taskForm, {
     artist: "",
     city: "",
@@ -274,13 +348,15 @@ const resetForm = () => {
     customer_info: "",
     contact_phone: "",
     bounty: 0,
+    skuId: "",
+    itemId: "",
   });
 
-  // 3. ✨ 关键点：取消左侧表格的高亮选中状态
-  // 假设你的表格引用名为 ticketTable
   if (ticketTable.value) {
     ticketTable.value.setCurrentRow(null);
   }
+  // 重置时恢复展开文字
+  isAllExpanded.value = true;
 };
 </script>
 
@@ -303,10 +379,5 @@ const resetForm = () => {
 .full-height-card {
   height: 100%;
   overflow-y: auto;
-}
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 </style>
