@@ -2,13 +2,7 @@
   <el-container class="layout-container">
     <el-aside width="220px">
       <div class="logo">演出助手</div>
-      <el-menu
-        :default-active="$route.path"
-        router
-        background-color="#304156"
-        text-color="#fff"
-        active-text-color="#409EFF"
-      >
+      <el-menu :default-active="$route.path" router background-color="#304156" text-color="#fff" active-text-color="#409EFF">
         <el-menu-item index="/task">
           <el-icon><Monitor /></el-icon>
           <span>任务</span>
@@ -16,14 +10,6 @@
         <el-menu-item index="/ticket-items">
           <el-icon><User /></el-icon>
           <span>票档</span>
-        </el-menu-item>
-        <el-menu-item index="/account">
-          <el-icon><User /></el-icon>
-          <span>账号</span>
-        </el-menu-item>
-        <el-menu-item index="/logs">
-          <el-icon><Document /></el-icon>
-          <span>日志</span>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -44,7 +30,7 @@
 </template>
 
 <script setup>
-import { Monitor, User, Document } from "@element-plus/icons-vue";
+import { Monitor, User, Document } from '@element-plus/icons-vue';
 </script>
 
 <style>

@@ -17,19 +17,7 @@ const routes = [
     name: "TicketItems",
     component: () => import("@/views/Ticket/index.vue"), // 对应刚才写的新页面
     meta: { title: "票档监控", icon: "Ticket" },
-  },
-  {
-    path: "/account",
-    name: "Account",
-    component: () => import("@/views/Account/index.vue"),
-    meta: { title: "账号管理" },
-  },
-  {
-    path: "/logs",
-    name: "Logs",
-    component: () => import("@/views/Logs/index.vue"),
-    meta: { title: "抢票日志" },
-  },
+  }
 ];
 
 const router = createRouter({

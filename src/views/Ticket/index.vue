@@ -54,8 +54,8 @@
             <template #default="{ row }">
               <template v-if="row.sku_id">
                 <el-tag :type="row.stock_status === '有票' || row.stock_status === 1 ? 'success' : 'info'" size="small">
-                  {{ row.stock_status === '有票' || row.stock_status === 1 ? '有票' : '无票' }} </el-tag
-                >∏
+                  {{ row.stock_status === '有票' || row.stock_status === 1 ? '有票' : '无票' }}
+                </el-tag>
               </template>
             </template>
           </el-table-column>
@@ -109,14 +109,14 @@
 
 <script setup>
 // ✨ 增加 nextTick 导入
-import { ref, reactive, nextTick } from "vue";
-import { searchProjects, getTicketSkus } from "@/api/ticket";
-import { createTask } from "@/api/task";
-import { ElMessage } from "element-plus";
+import { ref, reactive, nextTick } from 'vue';
+import { searchProjects, getTicketSkus } from '@/api/ticket';
+import { createTask } from '@/api/task';
+import { ElMessage } from 'element-plus';
 // ✨ 增加图标导入
-import { ArrowUp, ArrowDown } from "@element-plus/icons-vue";
+import { ArrowUp, ArrowDown } from '@element-plus/icons-vue';
 
-const searchKeyword = ref("");
+const searchKeyword = ref('');
 const searchLoading = ref(false);
 const submitLoading = ref(false);
 const projectOptions = ref([]);
@@ -126,26 +126,26 @@ const ticketTable = ref(null);
 const isAllExpanded = ref(true); // ✨ 控制展开收起状态
 
 const taskForm = reactive({
-  artist: "",
-  city: "",
-  target_date: "",
+  artist: '',
+  city: '',
+  target_date: '',
   target_price: 0,
-  customer_info: "",
-  contact_phone: "",
+  customer_info: '',
+  contact_phone: '',
   bounty: 0,
-  sku_id: "",
-  item_id: "",
+  sku_id: '',
+  item_id: '',
 });
 
 const formatSaleTime = (timeStr) => {
-  if (!timeStr || timeStr === "-") return "-";
+  if (!timeStr || timeStr === '-') return '-';
   try {
     const date = new Date(timeStr);
     const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    const hh = String(date.getHours()).padStart(2, "0");
-    const mm = String(date.getMinutes()).padStart(2, "0");
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
 
     return `${y}-${m}-${d} ${hh}:${mm}`;
   } catch (e) {
@@ -156,10 +156,10 @@ const formatSaleTime = (timeStr) => {
 const handleSearchTicket = async (query) => {
   searchLoading.value = true;
   try {
-    const res = await searchProjects({ keyword: query || "" });
+    const res = await searchProjects({ keyword: query || '' });
     projectOptions.value = res.data;
   } catch (error) {
-    console.error("搜索失败", error);
+    console.error('搜索失败', error);
   } finally {
     searchLoading.value = false;
   }
@@ -190,15 +190,13 @@ const onProjectSelect = async (val) => {
       // 格式化日期展示
       const d = new Date(item.perform_time);
       const dateStr = d
-        .toLocaleDateString("zh-CN", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
+        .toLocaleDateString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
         })
-        .replace(/\//g, "-");
-      const weekDay = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][
-        d.getDay()
-      ];
+        .replace(/\//g, '-');
+      const weekDay = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][d.getDay()];
       const timeStr = d.toTimeString().substring(0, 5);
       const displayLabel = `${dateStr} ${weekDay} ${timeStr}`;
 
@@ -234,12 +232,12 @@ const onProjectSelect = async (val) => {
 
     // 默认展开逻辑
     isAllExpanded.value = true;
-    await nextTick();∏
+    await nextTick();
     displayTree.value.forEach((row) => {
       ticketTable.value?.toggleRowExpansion(row, true);
     });
   } catch (error) {
-    ElMessage.error("获取票档详情失败");
+    ElMessage.error('获取票档详情失败');
   }
 };
 
@@ -258,15 +256,13 @@ const handleRowClick = (row) => {
   if (row.perform_time) {
     const d = new Date(row.perform_time);
     const dateStr = d
-      .toLocaleDateString("zh-CN", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
+      .toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
       })
-      .replace(/\//g, "-");
-    const weekDay = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][
-      d.getDay()
-    ];
+      .replace(/\//g, '-');
+    const weekDay = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][d.getDay()];
     const timeStr = d.toTimeString().substring(0, 5);
     taskForm.target_date = `${dateStr} ${weekDay} ${timeStr}`;
     taskForm.target_price = row.price_name;
@@ -275,7 +271,7 @@ const handleRowClick = (row) => {
 
 const submitTask = async () => {
   if (!taskForm.customer_info || !taskForm.customer_info.trim()) {
-    ElMessage.warning("请填写实名人信息（姓名+身份证号）");
+    ElMessage.warning('请填写实名人信息（姓名+身份证号）');
     return;
   }
   // 校验通过后，再开始加载状态
@@ -283,11 +279,11 @@ const submitTask = async () => {
   try {
     // 此时 taskForm 已经包含了你之前需要的 skuId 和 itemId
     await createTask(taskForm);
-    ElMessage.success("抢票任务录入成功");
+    ElMessage.success('抢票任务录入成功');
     resetForm();
   } catch (error) {
     // 建议增加错误捕获，防止接口报错导致 loading 一直转
-    console.error("保存失败:", error);
+    console.error('保存失败:', error);
   } finally {
     submitLoading.value = false;
   }
@@ -296,15 +292,15 @@ const submitTask = async () => {
 const resetForm = () => {
   selectedPrice.value = {};
   Object.assign(taskForm, {
-    artist: "",
-    city: "",
-    target_date: "",
+    artist: '',
+    city: '',
+    target_date: '',
     target_price: 0,
-    customer_info: "",
-    contact_phone: "",
+    customer_info: '',
+    contact_phone: '',
     bounty: 0,
-    skuId: "",
-    itemId: "",
+    skuId: '',
+    itemId: '',
   });
 
   if (ticketTable.value) {
@@ -342,5 +338,15 @@ const resetForm = () => {
 .full-height-card {
   height: 100%;
   overflow-y: auto;
+}
+
+/* 选中行样式：红色字体 */
+:deep(.ticket-row-selected) {
+  background-color: rgba(24, 144, 255, 0.12) !important;
+  box-shadow: inset 4px 0 0 0 rgba(24, 144, 255, 0.28);
+}
+:deep(.ticket-row-selected) .cell {
+  font-weight: 600;
+  color: #ff4d4f !important;
 }
 </style>
