@@ -14,23 +14,12 @@
               @focus="handleSearchTicket('')"
               :loading="searchLoading"
               style="width: 220px"
-              @change="onProjectSelect"
-            >
-              <el-option
-                v-for="item in projectOptions"
-                :key="item.item_id"
-                :label="item.project_title"
-                :value="item.item_id"
-              />
+              @change="onProjectSelect">
+              <el-option v-for="item in projectOptions" :key="item.item_id" :label="item.project_title" :value="item.item_id" />
             </el-select>
 
-            <el-button
-              type="primary"
-              link
-              @click="toggleAllExpansion"
-              :disabled="displayTree.length === 0"
-            >
-              {{ isAllExpanded ? "全部收起" : "全部展开" }}
+            <el-button type="primary" link @click="toggleAllExpansion" :disabled="displayTree.length === 0">
+              {{ isAllExpanded ? '全部收起' : '全部展开' }}
               <el-icon class="el-icon--right">
                 <component :is="isAllExpanded ? 'ArrowUp' : 'ArrowDown'" />
               </el-icon>
@@ -38,20 +27,10 @@
           </div>
         </template>
 
-        <el-table
-          ref="ticketTable"
-          :data="displayTree"
-          row-key="id"
-          border
-          highlight-current-row
-          @current-change="handleRowClick"
-          style="width: 100%"
-        >
+        <el-table ref="ticketTable" :data="displayTree" row-key="id" border highlight-current-row @current-change="handleRowClick" style="width: 100%">
           <el-table-column label="票档" min-width="250">
             <template #default="{ row }">
-              <span
-                :class="['ticket-label', row.sku_id ? 'is-sku' : 'is-date']"
-              >
+              <span :class="['ticket-label', row.sku_id ? 'is-sku' : 'is-date']">
                 {{ row.label }}
               </span>
             </template>
@@ -60,33 +39,23 @@
           <el-table-column label="开售时间" width="160" align="center">
             <template #default="{ row }">
               <span v-if="row.sku_id" class="sub-text">
-                {{
-                  row.sale_start_time
-                    ? row.sale_start_time.replace("T", " ").substring(0, 16)
-                    : "-"
-                }}
+                {{ row.sale_start_time ? row.sale_start_time.replace('T', ' ').substring(0, 16) : '-' }}
               </span>
             </template>
           </el-table-column>
 
           <el-table-column prop="price" label="价格" width="100" align="center">
             <template #default="{ row }">
-              <span v-if="row.price" style="color: #f56c6c; font-weight: bold"
-                >¥{{ row.price }}</span
-              >
+              <span v-if="row.price" style="color: #f56c6c; font-weight: bold">¥{{ row.price }}</span>
             </template>
           </el-table-column>
 
           <el-table-column label="状态" width="100" align="center">
             <template #default="{ row }">
               <template v-if="row.sku_id">
-                <el-tag
-                  :type="row.stock_status === '有票' ? 'success' : 'danger'"
-                  size="small"
-                  effect="plain"
-                >
-                  {{ row.stock_status || "无票" }}
-                </el-tag>
+                <el-tag :type="row.stock_status === '有票' || row.stock_status === 1 ? 'success' : 'info'" size="small">
+                  {{ row.stock_status === '有票' || row.stock_status === 1 ? '有票' : '无票' }} </el-tag
+                >∏
               </template>
             </template>
           </el-table-column>
@@ -99,17 +68,11 @@
         <template #header>
           <div class="card-header">
             <span>录入抢票任务</span>
-            <el-tag v-if="selectedPrice.sku_id" type="warning"
-              >已选中票档</el-tag
-            >
+            <el-tag v-if="selectedPrice.sku_id" type="warning">已选中票档</el-tag>
           </div>
         </template>
 
-        <el-form
-          :model="taskForm"
-          label-width="80px"
-          :disabled="!selectedPrice.sku_id"
-        >
+        <el-form :model="taskForm" label-width="80px" :disabled="!selectedPrice.sku_id">
           <el-form-item label="演出名称">
             <el-input v-model="taskForm.artist" disabled />
           </el-form-item>
@@ -123,39 +86,22 @@
           <el-divider content-position="left">客户信息</el-divider>
 
           <el-form-item label="实名人" required>
-            <el-input
-              v-model="taskForm.customer_info"
-              placeholder="姓名+身份证号"
-              type="textarea"
-              :rows="3"
-            />
+            <el-input v-model="taskForm.customer_info" placeholder="姓名+身份证号" type="textarea" :rows="3" />
           </el-form-item>
           <el-form-item label="联系电话">
             <el-input v-model="taskForm.contact_phone" placeholder="手机号" />
           </el-form-item>
           <el-form-item label="红包金额">
-            <el-input-number
-              v-model="taskForm.bounty"
-              :min="0"
-              style="width: 100%"
-            />
+            <el-input-number v-model="taskForm.bounty" :min="0" style="width: 100%" />
           </el-form-item>
 
           <el-form-item>
-            <el-button
-              type="primary"
-              @click="submitTask"
-              :loading="submitLoading"
-              >保存任务</el-button
-            >
+            <el-button type="primary" @click="submitTask" :loading="submitLoading">保存任务</el-button>
             <el-button @click="resetForm">重置</el-button>
           </el-form-item>
         </el-form>
 
-        <el-empty
-          v-if="!selectedPrice.sku_id"
-          description="请先在左侧选择具体票价"
-        />
+        <el-empty v-if="!selectedPrice.sku_id" description="请先在左侧选择具体票价" />
       </el-card>
     </div>
   </div>
@@ -288,7 +234,7 @@ const onProjectSelect = async (val) => {
 
     // 默认展开逻辑
     isAllExpanded.value = true;
-    await nextTick();
+    await nextTick();∏
     displayTree.value.forEach((row) => {
       ticketTable.value?.toggleRowExpansion(row, true);
     });
